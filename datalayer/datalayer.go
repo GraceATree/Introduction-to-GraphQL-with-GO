@@ -97,8 +97,8 @@ func (d *Database) DeletePassenger(passengerId string) (bool, error) {
 
 // Adds "setItem" to the StringSet (SS) identified by "setAttribute" on the record with a
 // a partition key of "keyAttribute" with the value of "key" in the Dynamo table "table".
-func addToSet(db *dynamodb.DynamoDB, table, keyAttribute, key, setAttribute, setItem string) error {
-	_, err := db.UpdateItem(&dynamodb.UpdateItemInput{
+func (d *Database) addToSet(table, keyAttribute, key, setAttribute, setItem string) error {
+	_, err := d.svc.UpdateItem(&dynamodb.UpdateItemInput{
 		ExpressionAttributeNames: map[string]*string{
 			"#0": &setAttribute,
 		},
@@ -116,8 +116,8 @@ func addToSet(db *dynamodb.DynamoDB, table, keyAttribute, key, setAttribute, set
 
 // Deletes "setItem" from the StringSet (SS) identified by "setAttribute" on the record with a
 // a partition key of "keyAttribute" with the value of "key" in the Dynamo table "table".
-func deleteFromSet(db *dynamodb.DynamoDB, table, keyAttribute, key, setAttribute, setItem string) error {
-	_, err := db.UpdateItem(&dynamodb.UpdateItemInput{
+func (d *Database) deleteFromSet(table, keyAttribute, key, setAttribute, setItem string) error {
+	_, err := d.svc.UpdateItem(&dynamodb.UpdateItemInput{
 		ExpressionAttributeNames: map[string]*string{
 			"#0": &setAttribute,
 		},
@@ -134,7 +134,7 @@ func deleteFromSet(db *dynamodb.DynamoDB, table, keyAttribute, key, setAttribute
 }
 
 func (d *Database) BookFlight(flightNumber string, passengerId string) (bool, error) {
-	err := addToSet(d.svc, "flights", "number", flightNumber, "passengers", passengerId)
+	err := d.addToSet("flights", "number", flightNumber, "passengers", passengerId)
 
 	if err != nil {
 		fmt.Println(err.Error())
@@ -145,7 +145,7 @@ func (d *Database) BookFlight(flightNumber string, passengerId string) (bool, er
 }
 
 func (d *Database) CancelBooking(flightNumber string, passengerId string) (bool, error) {
-	err := deleteFromSet(d.svc, "flights", "number", flightNumber, "passengers", passengerId)
+	err := d.deleteFromSet("flights", "number", flightNumber, "passengers", passengerId)
 
 	if err != nil {
 		fmt.Println(err.Error())
