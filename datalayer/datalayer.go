@@ -55,8 +55,7 @@ func (d *Database) CreatePassenger(name string) (*model.Passenger, error) {
 
 	av, err := dynamodbattribute.MarshalMap(item)
 	if err != nil {
-		fmt.Println("Got error marshalling new passenger item:")
-		fmt.Println(err.Error())
+		fmt.Printf("Got error marshalling new passenger item: %v\n", err.Error())
 		return nil, err
 	}
 
@@ -71,8 +70,7 @@ func (d *Database) CreatePassenger(name string) (*model.Passenger, error) {
 	// TODO change here
 	_, err = d.svc.PutItem(input)
 	if err != nil {
-		fmt.Println("Got error calling PutItem:")
-		fmt.Println(err.Error())
+		fmt.Printf("Got error calling PutItem: %v\n", err.Error())
 		return nil, err
 	}
 
@@ -91,8 +89,7 @@ func (d *Database) DeletePassenger(passengerId string) (bool, error) {
 
 	_, err := d.svc.DeleteItem(input)
 	if err != nil {
-		fmt.Println("Got error calling DeleteItem")
-		fmt.Println(err.Error())
+		fmt.Printf("Got error calling DeleteItem: %v\n", err.Error())
 		return false, err
 	}
 
@@ -171,8 +168,7 @@ func (d *Database) GetAllFlights() ([]*model.Flight, error) {
 	result, err := d.scanTable("flights")
 
 	if err != nil {
-		fmt.Println("Query API call failed:")
-		fmt.Println((err.Error()))
+		fmt.Printf("Query API call failed: %v\n", err.Error())
 		return nil, err
 	}
 
@@ -184,8 +180,7 @@ func (d *Database) GetAllFlights() ([]*model.Flight, error) {
 		err = dynamodbattribute.UnmarshalMap(dynamoItem, &item)
 
 		if err != nil {
-			fmt.Println("Got error unmarshalling:")
-			fmt.Println(err.Error())
+			fmt.Printf("Got error unmarshalling: %v\n", err.Error())
 			return nil, err
 		}
 
@@ -213,8 +208,7 @@ func convertDynamoFlightToFlight(dynamoFlight DynamoFlight) (*model.Flight, erro
 		passenger, err := GetPassenger(passengerId)
 
 		if err != nil {
-			fmt.Println("Query API call failed:")
-			fmt.Println((err.Error()))
+			fmt.Printf("Query API call failed: %v\n", err.Error())
 			return nil, err
 		}
 
@@ -237,8 +231,7 @@ func (d *Database) GetPassenger(passengerId string) (*model.Passenger, error) {
 	dynamoItem, err := d.svc.GetItem(input)
 
 	if err != nil {
-		fmt.Println("Query API call failed:")
-		fmt.Println((err.Error()))
+		fmt.Printf("Query API call failed: %v\n", err.Error())
 		return nil, err
 	}
 
@@ -247,8 +240,7 @@ func (d *Database) GetPassenger(passengerId string) (*model.Passenger, error) {
 	err = dynamodbattribute.UnmarshalMap(dynamoItem.Item, &item)
 
 	if err != nil {
-		fmt.Println("Got error unmarshalling:")
-		fmt.Println(err.Error())
+		fmt.Printf("Got error unmarshalling: %v\n", err.Error())
 		return nil, err
 	}
 
@@ -259,8 +251,7 @@ func (d *Database) GetAllPassengers() ([]*model.Passenger, error) {
 	result, err := d.scanTable("passengers")
 
 	if err != nil {
-		fmt.Println("Query API call failed:")
-		fmt.Println((err.Error()))
+		fmt.Printf("Query API call failed: %v\n", err.Error())
 		return nil, err
 	}
 
@@ -272,8 +263,7 @@ func (d *Database) GetAllPassengers() ([]*model.Passenger, error) {
 		err = dynamodbattribute.UnmarshalMap(dynamoItem, &item)
 
 		if err != nil {
-			fmt.Println("Got error unmarshalling:")
-			fmt.Println(err.Error())
+			fmt.Printf("Got error unmarshalling: %v\n", err.Error())
 			return nil, err
 		}
 
