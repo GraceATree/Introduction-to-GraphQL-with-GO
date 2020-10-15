@@ -67,7 +67,6 @@ func (d *Database) CreatePassenger(name string) (*model.Passenger, error) {
 		TableName: aws.String(tableName),
 	}
 
-	// TODO change here
 	_, err = d.svc.PutItem(input)
 	if err != nil {
 		fmt.Printf("Got error calling PutItem: %v\n", err.Error())
