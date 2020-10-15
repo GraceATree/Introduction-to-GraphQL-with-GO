@@ -23,19 +23,31 @@ func initialiseDb() *dynamodb.DynamoDB {
 	return dynamodb.New(sess)
 }
 
-func scanTable(svc *dynamodb.DynamoDB, tableName string) (*dynamodb.ScanOutput, error) {
+// In order to reuse the connection, the best practice is to set up a struct
+// that will hold the data about the database.
+type Database struct {
+	svc *dynamodb.DynamoDB
+}
+
+// Create new Database struct
+func NewDatabase() Database {
+	d := Database{}
+	dynamo := initialiseDb()
+	d.svc = dynamo
+	return d
+}
+
+func (d *Database) scanTable(tableName string) (*dynamodb.ScanOutput, error) {
 	// Build the query input parameters
 	params := &dynamodb.ScanInput{
 		TableName: aws.String(tableName),
 	}
 
 	// Make the DynamoDB Query API call
-	return svc.Scan(params)
+	return d.svc.Scan(params)
 }
 
-func CreatePassenger(name string) (*model.Passenger, error) {
-	svc := initialiseDb()
-
+func (d *Database) CreatePassenger(name string) (*model.Passenger, error) {
 	item := model.Passenger{
 		ID:   uuid.New().String(),
 		Name: name,
@@ -56,7 +68,8 @@ func CreatePassenger(name string) (*model.Passenger, error) {
 		TableName: aws.String(tableName),
 	}
 
-	_, err = svc.PutItem(input)
+	// TODO change here
+	_, err = d.svc.PutItem(input)
 	if err != nil {
 		fmt.Println("Got error calling PutItem:")
 		fmt.Println(err.Error())
@@ -66,9 +79,7 @@ func CreatePassenger(name string) (*model.Passenger, error) {
 	return &item, nil
 }
 
-func DeletePassenger(passengerId string) (bool, error) {
-	svc := initialiseDb()
-
+func (d *Database) DeletePassenger(passengerId string) (bool, error) {
 	input := &dynamodb.DeleteItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
@@ -78,7 +89,7 @@ func DeletePassenger(passengerId string) (bool, error) {
 		TableName: aws.String("passengers"),
 	}
 
-	_, err := svc.DeleteItem(input)
+	_, err := d.svc.DeleteItem(input)
 	if err != nil {
 		fmt.Println("Got error calling DeleteItem")
 		fmt.Println(err.Error())
@@ -126,10 +137,8 @@ func deleteFromSet(db *dynamodb.DynamoDB, table, keyAttribute, key, setAttribute
 	return err
 }
 
-func BookFlight(flightNumber string, passengerId string) (bool, error) {
-	svc := initialiseDb()
-
-	err := addToSet(svc, "flights", "number", flightNumber, "passengers", passengerId)
+func (d *Database) BookFlight(flightNumber string, passengerId string) (bool, error) {
+	err := addToSet(d.svc, "flights", "number", flightNumber, "passengers", passengerId)
 
 	if err != nil {
 		fmt.Println(err.Error())
@@ -139,10 +148,8 @@ func BookFlight(flightNumber string, passengerId string) (bool, error) {
 	return true, nil
 }
 
-func CancelBooking(flightNumber string, passengerId string) (bool, error) {
-	svc := initialiseDb()
-
-	err := deleteFromSet(svc, "flights", "number", flightNumber, "passengers", passengerId)
+func (d *Database) CancelBooking(flightNumber string, passengerId string) (bool, error) {
+	err := deleteFromSet(d.svc, "flights", "number", flightNumber, "passengers", passengerId)
 
 	if err != nil {
 		fmt.Println(err.Error())
@@ -160,10 +167,8 @@ type DynamoFlight struct {
 	Plane      string
 }
 
-func GetAllFlights() ([]*model.Flight, error) {
-	svc := initialiseDb()
-
-	result, err := scanTable(svc, "flights")
+func (d *Database) GetAllFlights() ([]*model.Flight, error) {
+	result, err := d.scanTable("flights")
 
 	if err != nil {
 		fmt.Println("Query API call failed:")
@@ -219,9 +224,7 @@ func convertDynamoFlightToFlight(dynamoFlight DynamoFlight) (*model.Flight, erro
 	return &flight, nil
 }
 
-func GetPassenger(passengerId string) (*model.Passenger, error) {
-	svc := initialiseDb()
-
+func (d *Database) GetPassenger(passengerId string) (*model.Passenger, error) {
 	input := &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"id": {
@@ -231,7 +234,7 @@ func GetPassenger(passengerId string) (*model.Passenger, error) {
 		TableName: aws.String("passengers"),
 	}
 
-	dynamoItem, err := svc.GetItem(input)
+	dynamoItem, err := d.svc.GetItem(input)
 
 	if err != nil {
 		fmt.Println("Query API call failed:")
@@ -252,10 +255,8 @@ func GetPassenger(passengerId string) (*model.Passenger, error) {
 	return &item, nil
 }
 
-func GetAllPassengers() ([]*model.Passenger, error) {
-	svc := initialiseDb()
-
-	result, err := scanTable(svc, "passengers")
+func (d *Database) GetAllPassengers() ([]*model.Passenger, error) {
+	result, err := d.scanTable("passengers")
 
 	if err != nil {
 		fmt.Println("Query API call failed:")
